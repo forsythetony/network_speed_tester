@@ -9,6 +9,7 @@ from google.auth.transport.requests import Request
 import pyspeedtest
 import datetime
 import time
+import yaml
 
 SPEED_TEST_HOST_SERVER = None
 
@@ -21,6 +22,63 @@ TARGET_RANGE = None
 CREDENTIALS_JSON_PATH = None
 
 MINUTES_BETWEEN_CALLS = None
+
+def set_config(config):
+    print("Extracting config values...")
+    
+    global SPEED_TEST_HOST_SERVER
+    global SPREADSHEET_ID
+    global TARGET_RANGE
+    global MINUTES_BETWEEN_CALLS
+
+    if 'spreadsheet' not in config: 
+        raise Exception("Missing 'spreadsheet' key in config")
+
+    if 'id' not in config['spreadsheet']:
+        raise Exception("Missing 'spreadsheet->id' key in config")
+    
+    if 'range' not in config['spreadsheet']:
+        raise Exeption("Missing 'spreadsheet->range' key in config")
+
+    SPREADSHEET_ID = config['spreadsheet']['id']
+    TARGET_RANGE = config['spreadsheet']['range']
+
+    if 'speed_server' in config:
+        SPEED_TEST_HOST_SERVER = config['speed_server']
+    else:
+        SPEED_TEST_HOST_SERVER = 'speedtest.usinternet.com:8080'
+
+    if 'minutes_between_calls' in config:
+        MINUTES_BETWEEN_CALLS = config['minutes_between_calls']
+    else:
+        MINUTES_BETWEEN_CALLS = 60
+    
+    print("""\nConfig values:
+    Spreadsheet ID:\t{}
+    Spreadsheet Range:\t{}
+    Speed Test Server:\t{}
+    Minutes Between Calls:\t{}
+    """.format(
+        SPREADSHEET_ID, 
+        TARGET_RANGE, 
+        SPEED_TEST_HOST_SERVER, 
+        MINUTES_BETWEEN_CALLS))
+    
+def load_config():
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    full_config_path = os.path.join(script_dir, 'config', 'config.yml')
+
+    if not os.path.exists(full_config_path):
+        raise Exception("Missing application config file at path -> {}".format(full_config_path))
+    
+    with open(full_config_path, 'r') as stream:
+        try:
+            set_config(yaml.safe_load(stream))
+        except yaml.YAMLError as exc:
+            print("Failed to load the YAML file...")
+            print(exc)
+            raise Exception('Failed to open YAML file')
 
 def convert_to_mbps(bitsPerSecond):
 
@@ -58,6 +116,11 @@ def get_network_results():
 
 
 def main():
+    """
+    Load config from .yml file at 'config/config.yml'
+    """
+    load_config()
+
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
