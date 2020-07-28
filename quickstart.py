@@ -10,21 +10,17 @@ import pyspeedtest
 import datetime
 import time
 
-SPEED_TEST_HOST_SERVER = "speedtest.usinternet.com:8080"
+SPEED_TEST_HOST_SERVER = None
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1PXujhhz-4NWpUHGqQ_D0pukY35jBWyBw7zgIOzBKp60'
-SAMPLE_RANGE_NAME = 'Class Data!A2:E'
+SPREADSHEET_ID = None
+TARGET_RANGE = None
 
-TEST_SPREADSHEET_ID = '1PXujhhz-4NWpUHGqQ_D0pukY35jBWyBw7zgIOzBKp60'
-TEST_RANGE_NAME = 'Test Sheet!A:C'
+CREDENTIALS_JSON_PATH = None
 
-CREDENTIALS_JSON_PATH = '/Users/forsythetony/Documents/Coding/python/speed_tester/credentials/speed_tester_creds.json'
-
-MINUTES_BETWEEN_CALLS = .5
+MINUTES_BETWEEN_CALLS = None
 
 def convert_to_mbps(bitsPerSecond):
 
@@ -91,10 +87,23 @@ def main():
 
         upload_results_using_service(service, results)
 
-        print("Uploaded network results will now sleep for 5 seconds")
+        seconds_between_calls = MINUTES_BETWEEN_CALLS * 60
+
+        build_log_statement(MINUTES_BETWEEN_CALLS, results)
         
-        time.sleep(5)
+        time.sleep(seconds_between_calls)
     
+
+def get_current_timestamp():
+    now = datetime.datetime.now()
+    return now.strftime('%m-%d-%y %H:%M:%S')
+
+def build_log_statement(sleep_minutes, results):
+    log_string = "[{}]".format(get_current_timestamp())
+    log_string += "Test Results -> {}".format(results)
+    log_string += "..."
+    log_string += "Will now sleep for {} minutes".format(sleep_minutes)
+    print(log_string)
 
 def upload_results_using_service(service, results):
     # Call the Sheets API
@@ -103,10 +112,11 @@ def upload_results_using_service(service, results):
         "values": [results]
     }
 
-    service.spreadsheets().values().append(spreadsheetId=TEST_SPREADSHEET_ID,
-                                                 range=TEST_RANGE_NAME,
+    service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
+                                                 range=TARGET_RANGE,
                                                     body=resource,
                                                     valueInputOption='USER_ENTERED'
                                                     ).execute()
+
 if __name__ == '__main__':
     main()
