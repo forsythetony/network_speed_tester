@@ -1,0 +1,5 @@
+speed_server: 'speedtest.usinternet.com:8080'
+spreadsheet:
+    id: '<INSERT ID HERE>'
+    range: '<INSERT RANGE HERE>'
+minutes_between_calls: 80
